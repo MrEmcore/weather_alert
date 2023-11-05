@@ -51,8 +51,8 @@ class WeatherAlert:
         """
         if title:
             client = boto3.client('sns', region_name="eu-west-2",
-                                  aws_access_key_id="",
-                                  aws_secret_access_key="")
+                                  aws_access_key_id=os.getenv("ACCESS_KEY_ID"),
+                                  aws_secret_access_key=os.getenv("SECRET_ACCESS_KEY"))
             response = client.publish(
                 TopicArn="arn:aws:sns:eu-west-2:416241265996:weather_alert",
                 Message=title,
@@ -60,8 +60,8 @@ class WeatherAlert:
             )
         else:
             client = boto3.client('sns', region_name="eu-west-2",
-                                  aws_access_key_id="",
-                                  aws_secret_access_key="")
+                                  aws_access_key_id=os.getenv("ACCESS_KEY_ID"),
+                                  aws_secret_access_key=os.getenv("SECRET_ACCESS_KEY"))
             response = client.publish(
                 TopicArn="arn:aws:sns:eu-west-2:416241265996:weather_alert",
                 Message="Have a nice day",
@@ -69,7 +69,19 @@ class WeatherAlert:
             )
             print(response)
 
+def lambda_handler(event, context):
+    weather_alert = WeatherAlert()
+    api_data = weather_alert.get_data(
+        url="https://api.weatherbit.io/v2.0/alerts",
+        key=os.getenv("WEATHER_API_KEY"),
+        city="Dundee",
+        country="GB"
+    )
+    print(api_data)
+    title, severity = weather_alert.check_for_alert(response_data=api_data)
+    print(title, severity)
 
+    weather_alert.send_email(title=title, severity=severity)
 
 if __name__ == "__main__":
 
